@@ -2,7 +2,7 @@ import pygame as pg
 
 pg.init()
 
-from mosfet import MOSFET
+from mosfet import MOSFET, Terminal
 from nmosfet import N_MOSFET
 from pmosfet import P_MOSFET
 
@@ -34,8 +34,10 @@ run: bool = True
     The main loop that will run the program
 """
 
-active_element = None
-active_element_diff = None
+active_element: MOSFET | Terminal = None
+"""
+    The element that is currently being dragged
+"""
 
 clock = pg.time.Clock()
 
@@ -47,24 +49,30 @@ while run:
         if event.type == pg.KEYDOWN:
             pass
         if event.type == pg.MOUSEBUTTONUP:
+            if not active_element:
+                continue
+            mouse_pos = pg.mouse.get_pos()
+            for entity in entities:
+                clicked = entity.get_clicked(pg.mouse.get_pos())
+                if clicked:
+                    active_element.handle_drop(mouse_pos, clicked)
+                    break
+            else:
+                active_element.handle_drop(mouse_pos, None)
             active_element = None
 
         if event.type == pg.MOUSEBUTTONDOWN:
             mouse_pos = pg.mouse.get_pos()
             for entity in entities:
-                if entity.is_clicked(mouse_pos):
-                    # active_element = entity.get_clicked(mouse_pos)
-                    active_element = entity
-                    active_element_diff = (
-                        mouse_pos[0] - entity.x,
-                        mouse_pos[1] - entity.y,
-                    )
+                active_element = entity.get_clicked(mouse_pos)
+                if active_element:
+                    active_element.handle_click(mouse_pos)
+
                     break
         if event.type == pg.MOUSEMOTION:
             if active_element:
-                active_element.x, active_element.y = pg.mouse.get_pos()
-                active_element.x -= active_element_diff[0]
-                active_element.y -= active_element_diff[1]
+                mouse_pos = pg.mouse.get_pos()
+                active_element.handle_drag(mouse_pos)
 
     screen.fill(BACKGROUND_COLOR)
     clock.tick(165)
