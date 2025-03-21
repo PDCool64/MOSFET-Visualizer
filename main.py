@@ -17,7 +17,7 @@ font = pg.font.Font(None, 20)
 
 
 # Set up the drawing window
-screen: pg.Surface = pg.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
+screen: pg.Surface = pg.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT], pg.RESIZABLE)
 """
     The main screen that will be displayed
 """

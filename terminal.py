@@ -55,7 +55,8 @@ class Terminal:
 
     def handle_drop(self, pos: tuple[int, int], terminal):
         self.line_end = None
-        self.connection = terminal
+        if isinstance(terminal):
+            self.connection = terminal
         print(terminal)
 
     def __repr__(self):
@@ -72,6 +73,18 @@ class Source(Terminal):
     line_end: {self.line_end}
         """
 
+    def handle_drop(self, pos, terminal):
+        self.line_end = None
+        if not isinstance(terminal, Terminal):
+            return
+        if isinstance(terminal, Source):
+            return
+        if isinstance(terminal, Gate):
+            return
+
+        # connection is a drain
+        self.connection = terminal
+
 
 class Gate(Terminal):
     def __repr__(self):
@@ -80,6 +93,18 @@ class Gate(Terminal):
     line_end: {self.line_end}
         """
 
+    def handle_drop(self, pos, terminal):
+        self.line_end = None
+        if not isinstance(terminal, Terminal):
+            return
+        if isinstance(terminal, Source):
+            return
+        if isinstance(terminal, Gate):
+            return
+
+        # connection is a drain
+        self.connection = terminal
+
 
 class Drain(Terminal):
     def __repr__(self):
@@ -87,3 +112,11 @@ class Drain(Terminal):
     pos: {self.rect.topleft}
     line_end: {self.line_end}
         """
+
+    def handle_drop(self, pos, terminal):
+        self.line_end = None
+        if not isinstance(terminal, Terminal):
+            return
+        if isinstance(terminal, Drain):
+            return
+        terminal.connection = self
