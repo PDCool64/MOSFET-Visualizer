@@ -1,5 +1,5 @@
 import pygame as pg
-
+from pole import MinusPoleConnector, Pole
 
 font = pg.font.Font(None, 20)
 
@@ -48,7 +48,8 @@ class Terminal:
         return self.rect.collidepoint(pos)
 
     def handle_click(self, pos: tuple[int, int]):
-        self.mouse_diff = (pos[0] - self.rect.center[0], pos[1] - self.rect.center[1])
+        # self.mouse_diff = (pos[0] - self.rect.center[0], pos[1] - self.rect.center[1])
+        self.mouse_diff = (0, 0)
 
     def handle_drag(self, pos: tuple[int, int]):
         self.line_end = (pos[0] - self.mouse_diff[0], pos[1] - self.mouse_diff[1])
@@ -75,6 +76,10 @@ class Source(Terminal):
 
     def handle_drop(self, pos, terminal):
         self.line_end = None
+        if isinstance(terminal, Node):
+            self.connection = terminal
+        if isinstance(terminal, Pole):
+            self.connection = terminal
         if not isinstance(terminal, Terminal):
             return
         if isinstance(terminal, Source):
@@ -95,7 +100,12 @@ class Gate(Terminal):
 
     def handle_drop(self, pos, terminal):
         self.line_end = None
+        if isinstance(terminal, MinusPoleConnector):
+            self.connection = terminal
+        if isinstance(terminal, Node):
+            self.connection = terminal
         if not isinstance(terminal, Terminal):
+            print(terminal)
             return
         if isinstance(terminal, Source):
             return
@@ -115,8 +125,55 @@ class Drain(Terminal):
 
     def handle_drop(self, pos, terminal):
         self.line_end = None
+        if isinstance(terminal, Node):
+            terminal.connection = self
         if not isinstance(terminal, Terminal):
             return
         if isinstance(terminal, Drain):
             return
         terminal.connection = self
+
+
+class Node:
+    def __init__(self, x: float, y: float, color: tuple[int, int, int]):
+        self.x = x
+        self.y = y
+        self.radius = 10
+        self.rect = pg.Rect(x, y, self.radius, self.radius)
+        self.color = color
+        self.connection: Terminal = None
+
+    def __repr__(self):
+        return f"Node: {self.x, self.y}"
+
+    def draw(self, screen: pg.Surface):
+        pg.draw.circle(screen, self.color, (self.x, self.y), self.radius)
+        if self.connection:
+            pg.draw.line(
+                screen, self.color, (self.x, self.y), self.connection.rect.center, 5
+            )
+
+    def update(self):
+        self.rect = pg.Rect(self.x, self.y, self.radius, self.radius)
+
+    def is_clicked(self, pos) -> bool:
+        mouse_x, mouse_y = pos
+        distance_from_middle_point = (
+            (mouse_x - self.x) ** 2 + (mouse_y - self.y) ** 2
+        ) ** 0.5
+        circle_hit = distance_from_middle_point <= self.radius
+        return circle_hit
+
+    def get_clicked(self, pos) -> "None | Node":
+        if self.is_clicked(pos):
+            return self
+
+    def handle_click(self, pos):
+        pass
+
+    def handle_drag(self, pos):
+        self.x, self.y = pos
+
+    def handle_drop(self, pos, terminal):
+        self.x, self.y = pos
+        print(terminal)

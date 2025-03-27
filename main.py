@@ -1,13 +1,30 @@
 import pygame as pg
 
+from pole import MinusPole, PlusPole
+
 pg.init()
 
 from mosfet import MOSFET, Terminal
 from nmosfet import N_MOSFET
 from pmosfet import P_MOSFET
+from terminal import Node
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080
 BACKGROUND_COLOR = (210, 210, 235)
+
+
+def handle_key_down(event: pg.event.Event):
+    if event.key == pg.K_p:
+        entities.append(P_MOSFET(*pg.mouse.get_pos()))
+    if event.key == pg.K_n:
+        entities.append(N_MOSFET(*pg.mouse.get_pos()))
+    if event.key == pg.K_d:
+        entities.append(Node(*pg.mouse.get_pos(), (0, 0, 0)))
+    if event.key == pg.K_DELETE or event.key == pg.K_x:
+        for entity in entities:
+            if entity.get_clicked(pg.mouse.get_pos()):
+                entities.remove(entity)
+                break
 
 
 font = pg.font.Font(None, 20)
@@ -22,13 +39,18 @@ screen: pg.Surface = pg.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT], pg.RESIZ
     The main screen that will be displayed
 """
 
-entities: list[MOSFET] = []
+entities: list[MOSFET | Node] = []
 """
     List of entities that will be drawn on the screen
 """
 entities.append(P_MOSFET(100, 100))
 entities.append(N_MOSFET(400, 100))
 entities.append(P_MOSFET(700, 100))
+
+entities.append(MinusPole())
+entities.append(PlusPole())
+
+entities.append(Node(100, 400, (255, 0, 0)))
 run: bool = True
 """
     The main loop that will run the program
@@ -47,7 +69,7 @@ while run:
         if event.type == pg.QUIT:
             run = False
         if event.type == pg.KEYDOWN:
-            pass
+            handle_key_down(event)
         if event.type == pg.MOUSEBUTTONUP:
             if not active_element:
                 continue
